@@ -21,27 +21,29 @@ subject to the following restrictions:
 ///that is better portable and more predictable
 
 #include "b3Scalar.h"
-//#define B3_DEBUG_MEMORY_ALLOCATIONS 1
+#define B3_DEBUG_MEMORY_ALLOCATIONS 1
+/*
 #ifdef B3_DEBUG_MEMORY_ALLOCATIONS
-
 #define b3AlignedAlloc(a, b) \
 	b3AlignedAllocInternal(a, b, __LINE__, __FILE__)
 
 #define b3AlignedFree(ptr) \
 	b3AlignedFreeInternal(ptr, __LINE__, __FILE__)
 
-void* b3AlignedAllocInternal(size_t size, int alignment, int line, char* filename);
+void* b3AlignedAllocInternal(size_t size, int alignment, int line, const char* filename);
 
-void b3AlignedFreeInternal(void* ptr, int line, char* filename);
-
+void b3AlignedFreeInternal(void* ptr, int line, const char* filename);
 #else
+
+*/
 void* b3AlignedAllocInternal(size_t size, int alignment);
 void b3AlignedFreeInternal(void* ptr);
 
 #define b3AlignedAlloc(size, alignment) b3AlignedAllocInternal(size, alignment)
 #define b3AlignedFree(ptr) b3AlignedFreeInternal(ptr)
 
-#endif
+// #endif
+
 typedef int btSizeType;
 
 typedef void*(b3AlignedAllocFunc)(size_t size, int alignment);

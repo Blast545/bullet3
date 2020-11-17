@@ -15,7 +15,8 @@ subject to the following restrictions:
 
 #include "b3AlignedAllocator.h"
 
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
+// printf("ALLOCATOR STATISTICS");
 int b3g_numAlignedAllocs = 0;
 int b3g_numAlignedFree = 0;
 int b3g_totalBytesAlignedAllocs = 0;  //detect memory leaks
@@ -23,18 +24,21 @@ int b3g_totalBytesAlignedAllocs = 0;  //detect memory leaks
 
 static void *b3AllocDefault(size_t size)
 {
-	return malloc(size);
+  //* b3Printf("malloc default called %d\n", size);
+  return malloc(size);
 }
 
 static void b3FreeDefault(void *ptr)
 {
-	free(ptr);
+  //* b3Printf("free default called %x\n", ptr);
+  free(ptr);
 }
 
 static b3AllocFunc *b3s_allocFunc = b3AllocDefault;
 static b3FreeFunc *b3s_freeFunc = b3FreeDefault;
 
 #if defined(B3_HAS_ALIGNED_ALLOCATOR)
+printf("HAS ALLIGNED ALLOCATOR");
 #include <malloc.h>
 static void *b3AlignedAllocDefault(size_t size, int alignment)
 {
@@ -45,22 +49,11 @@ static void b3AlignedFreeDefault(void *ptr)
 {
 	_aligned_free(ptr);
 }
-#elif defined(__CELLOS_LV2__)
-#include <stdlib.h>
-
-static inline void *b3AlignedAllocDefault(size_t size, int alignment)
-{
-	return memalign(alignment, size);
-}
-
-static inline void b3AlignedFreeDefault(void *ptr)
-{
-	free(ptr);
-}
 #else
 
 static inline void *b3AlignedAllocDefault(size_t size, int alignment)
 {
+  b3Printf("alloc default called %d, %d\n", size, alignment);
 	void *ret;
 	char *real;
 	real = (char *)b3s_allocFunc(size + sizeof(void *) + (alignment - 1));
@@ -83,6 +76,7 @@ static inline void b3AlignedFreeDefault(void *ptr)
 	if (ptr)
 	{
 		real = *((void **)(ptr)-1);
+		b3Printf("free default called #%x\n", ptr);
 		b3s_freeFunc(real);
 	}
 }
@@ -103,19 +97,20 @@ void b3AlignedAllocSetCustom(b3AllocFunc *allocFunc, b3FreeFunc *freeFunc)
 	b3s_freeFunc = freeFunc ? freeFunc : b3FreeDefault;
 }
 
-#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
+#ifndef B3_DEBUG_MEMORY_ALLOCATIONS
 //this generic allocator provides the total allocated number of bytes
 #include <stdio.h>
 
-void *b3AlignedAllocInternal(size_t size, int alignment, int line, char *filename)
+void *b3AlignedAllocInternal(size_t size, int alignment, int line, const char *filename)
 {
-	void *ret;
+        void *ret;
 	char *real;
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 	b3g_totalBytesAlignedAllocs += size;
 	b3g_numAlignedAllocs++;
 #endif
 	real = (char *)b3s_allocFunc(size + 2 * sizeof(void *) + (alignment - 1));
+	b3Printf("alloc to address %x\n", real);
 	if (real)
 	{
 		ret = (void *)b3AlignPointer(real + 2 * sizeof(void *), alignment);
@@ -126,7 +121,7 @@ void *b3AlignedAllocInternal(size_t size, int alignment, int line, char *filenam
 	{
 		ret = (void *)(real);  //??
 	}
-
+	b3Printf("ret value %x\n", ret);
 	b3Printf("allocation#%d at address %x, from %s,line %d, size %d\n", b3g_numAlignedAllocs, real, filename, line, size);
 
 	int *ptr = (int *)ret;
@@ -134,17 +129,18 @@ void *b3AlignedAllocInternal(size_t size, int alignment, int line, char *filenam
 	return (ret);
 }
 
-void b3AlignedFreeInternal(void *ptr, int line, char *filename)
+void b3AlignedFreeInternal(void *ptr, int line, const char *filename)
 {
+  b3Printf("free at address %x\n", ptr);
 	void *real;
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 	b3g_numAlignedFree++;
 #endif
 	if (ptr)
 	{
 		real = *((void **)(ptr)-1);
 		int size = *((int *)(ptr)-2);
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 		b3g_totalBytesAlignedAllocs -= size;
 #endif
 		b3Printf("free #%d at address %x, from %s,line %d, size %d\n", b3g_numAlignedFree, real, filename, line, size);
@@ -161,12 +157,14 @@ void b3AlignedFreeInternal(void *ptr, int line, char *filename)
 
 void *b3AlignedAllocInternal(size_t size, int alignment)
 {
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 	b3g_numAlignedAllocs++;
 #endif
 	void *ptr;
-	ptr = b3s_alignedAllocFunc(size, alignment);
-	//	b3Printf("b3AlignedAllocInternal %d, %x\n",size,ptr);
+
+	//ptr = b3s_alignedAllocFunc(size, alignment);
+	ptr = malloc(size);	
+	//* b3Printf("b3AlignedAllocInternal %d, %x\n", size, ptr);
 	return ptr;
 }
 
@@ -176,11 +174,12 @@ void b3AlignedFreeInternal(void *ptr)
 	{
 		return;
 	}
-#ifdef B3_ALLOCATOR_STATISTICS
+#ifdef B3_DEBUG_MEMORY_ALLOCATIONS
 	b3g_numAlignedFree++;
 #endif
-	//	b3Printf("b3AlignedFreeInternal %x\n",ptr);
-	b3s_alignedFreeFunc(ptr);
+	//* b3Printf("b3AlignedFreeInternal %x\n",ptr);
+	//b3s_alignedFreeFunc(ptr);
+	free(ptr);
 }
 
 #endif  //B3_DEBUG_MEMORY_ALLOCATIONS

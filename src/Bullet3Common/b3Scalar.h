@@ -34,6 +34,7 @@ inline int b3GetVersion()
 
 #if defined(DEBUG) || defined(_DEBUG)
 #define B3_DEBUG
+// printf("%s", "<<<<<<DEBUG HERE>>>>>\n");
 #endif
 
 #include "b3Logging.h"  //for b3Error
@@ -341,6 +342,8 @@ typedef float32x4_t b3SimdFloat4;
 #define b3Assign128(r0, r1, r2, r3) \
 	(float32x4_t) { r0, r1, r2, r3 }
 #endif
+
+// #define B3_DECLARE_ALIGNED_ALLOCATOR()  
 
 #define B3_DECLARE_ALIGNED_ALLOCATOR()                                                                   \
 	B3_FORCE_INLINE void *operator new(size_t sizeInBytes) { return b3AlignedAlloc(sizeInBytes, 16); }   \

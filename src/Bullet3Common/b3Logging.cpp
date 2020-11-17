@@ -27,7 +27,9 @@ void b3PrintfFuncDefault(const char* msg)
 #ifdef _WIN32
 	OutputDebugStringA(msg);
 #endif
-	printf("%s", msg);
+	printf("%s\n", msg);
+	// fprintf(stdout, "DEF print!\n");
+	// fprintf(stderr, "DEF print!\n");
 	//is this portable?
 	fflush(stdout);
 }
@@ -37,7 +39,7 @@ void b3WarningMessageFuncDefault(const char* msg)
 #ifdef _WIN32
 	OutputDebugStringA(msg);
 #endif
-	printf("%s", msg);
+	printf("%s\n", msg);
 	//is this portable?
 	fflush(stdout);
 }
@@ -47,7 +49,7 @@ void b3ErrorMessageFuncDefault(const char* msg)
 #ifdef _WIN32
 	OutputDebugStringA(msg);
 #endif
-	printf("%s", msg);
+	printf("%s\n", msg);
 
 	//is this portable?
 	fflush(stdout);
